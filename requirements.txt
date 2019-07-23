@@ -1,0 +1,2 @@
+face-recognition==1.2.3
+pync==2.0.3
