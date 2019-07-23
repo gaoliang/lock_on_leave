@@ -12,13 +12,16 @@ my_face_encoding = face_recognition.face_encodings(picture_of_me)[0]
 
 
 def lock():
-    subprocess.call('/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend',
-                    shell=True)
+    subprocess.call("open -a /System/Library/CoreServices/ScreenSaverEngine.app", shell=True)
+
+    # old method.
+    # loginPF = CDLL('/System/Library/PrivateFrameworks/login.framework/Versions/Current/login')
+    # result = loginPF.SACLockScreenImmediate()
 
 
 def is_locked():
     d = Quartz.CGSessionCopyCurrentDictionary()
-    return d.get("CGSSessionScreenIsLocked", 0) == 0 and d.get("kCGSSessionOnConsoleKey", 0) == 0
+    return "CGSSessionScreenIsLocked" in d
 
 
 def is_me():
