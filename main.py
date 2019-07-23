@@ -18,7 +18,7 @@ def lock():
 
 def is_locked():
     d = Quartz.CGSessionCopyCurrentDictionary()
-    return 'CGSSessionScreenIsLocked' in d.keys()
+    return d.get("CGSSessionScreenIsLocked", 0) == 0 and d.get("kCGSSessionOnConsoleKey", 0) == 0
 
 
 def is_me():
@@ -34,7 +34,6 @@ def is_me():
     cap.release()  # releasing camera immediately after capturing picture
 
     if not _ or frame is None:
-        print(_, frame)
         pync.notify("⚠️ Unable to capture image. Please check", title="🔐 Lock on leave")
         return True
 
