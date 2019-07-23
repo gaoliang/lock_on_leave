@@ -62,6 +62,6 @@ if __name__ == "__main__":
                 if is_me():
                     pync.notify("✅ Find you! Cancel lock", title="🔐 Lock on leave")
                     will_lock = False
-                    continue
+                    break
             if will_lock:
                 lock()
