@@ -53,8 +53,8 @@ def is_me():
 
 if __name__ == "__main__":
     while True:
+        time.sleep(10)
         if is_locked() or is_me():
-            time.sleep(10)
             continue
         else:
             will_lock = True
