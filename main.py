@@ -1,14 +1,31 @@
 import subprocess
 import time
+from io import BytesIO
 
-import cv2
-import pync
 import Quartz
-
+import cv2
 import face_recognition
+import pync
+from PIL import Image
 
 picture_of_me = face_recognition.load_image_file("me.jpg")
 my_face_encoding = face_recognition.face_encodings(picture_of_me)[0]
+my_face_encodings = [my_face_encoding]
+
+# If you want, you can use multiple images at different angles to improve accuracy.
+# 
+# picture_of_me = face_recognition.load_image_file("me.jpg")
+# my_face_encoding = face_recognition.face_encodings(picture_of_me)[0]
+# picture_of_me = face_recognition.load_image_file("me2.jpg")
+# my_face_encoding2 = face_recognition.face_encodings(picture_of_me)[0]
+# picture_of_me = face_recognition.load_image_file("me3.jpg")
+# my_face_encoding3 = face_recognition.face_encodings(picture_of_me)[0]
+# my_face_encodings = [my_face_encoding, my_face_encoding2, my_face_encoding3]
+
+
+
+def notify(message):
+    pync.notify(message, title="🔐 Lock on leave", group='lock_on_leave')
 
 
 def lock():
@@ -30,22 +47,23 @@ def is_me():
     cap.set(4, 480)  # height=480
 
     if not cap.isOpened():
-        pync.notify("⚠️ Unable to open camera. Please check", title="🔐 Lock on leave")
+        notify("⚠️ Unable to open camera. Please check")
         return True
 
     _, frame = cap.read()
     cap.release()  # releasing camera immediately after capturing picture
 
     if not _ or frame is None:
-        pync.notify("⚠️ Unable to capture image. Please check", title="🔐 Lock on leave")
+        notify("⚠️ Unable to capture image. Please check")
         return True
-
-    cv2.imwrite('unknown.jpg', frame)
-    unknown_picture = face_recognition.load_image_file('unknown.jpg')
+    img = Image.fromarray(frame)
+    output = BytesIO()
+    img.save(output, format='JPEG')
+    unknown_picture = face_recognition.load_image_file(output)
     unknown_face_encodings = face_recognition.face_encodings(unknown_picture)
     for unknown_face_encoding in unknown_face_encodings:
-        results = face_recognition.compare_faces([my_face_encoding], unknown_face_encoding)
-        if results[0]:
+        results = face_recognition.compare_faces(my_face_encodings, unknown_face_encoding)
+        if any(results):
             return True
 
     return False
@@ -56,14 +74,17 @@ if __name__ == "__main__":
         time.sleep(10)
         if is_locked() or is_me():
             continue
-        else:
-            will_lock = True
-            for i in range(5, 0, -1):
-                pync.notify("⚠️ Can not find you, Going to Lock in {} second".format(i), title="🔐 Lock on leave")
-                time.sleep(1)
-                if is_me():
-                    pync.notify("✅ Find you! Cancel lock", title="🔐 Lock on leave")
-                    will_lock = False
-                    break
-            if will_lock:
-                lock()
+
+        will_lock = True
+        for i in range(10, 0, -1):
+            time.sleep(1)
+            # Silence for the first five seconds
+            if i <= 5:
+                notify("⚠️ Can not find you, Going to Lock in {} second".format(i))
+            if is_me():
+                if i <= 5:
+                    notify("✅ Find you! Cancel lock")
+                will_lock = False
+                break
+        if will_lock:
+            lock()
